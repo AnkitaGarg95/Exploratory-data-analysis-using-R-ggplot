@@ -1,0 +1,222 @@
+---
+title: "Trial work for A1"
+author: "Akshay Kapoor & Rishi Shah"
+date: "31/01/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+``` {r, explore, echo = FALSE}
+#?ChickWeight
+```
+# Looking what data we have
+A help seacrch on this dataset in R returns the following summary of data :
+
+The **chickWeight** data is a built in data "Weight versus age of chicks on different diets", this dataframe has 578 rows and 4 columns from an experiment on the effect of diet on early growth of chicks.
+
+It includes the following data-features : 
+**weight**: a numeric vector giving the body weight of the chick (gm).
+**Time**: a numeric vector giving the number of days since birth when the measurement was made.
+**Chick**: an ordered factor with levels 18 < ... < 48 giving a unique identifier for the chick. The ordering of the levels groups chicks on the same diet together and orders them according to their final weight (lightest to heaviest) within diet.
+Diet: a factor with levels 1,2,3, 4 indicating which experimental diet the chick received.
+
+Lets look at the few samples from the data set
+``` {r, see_the_data, echo =TRUE}
+chicken_dataset <-ChickWeight
+df_temp<-chicken_dataset[sample(nrow( chicken_dataset), 5),]
+rownames(df_temp)<-NULL
+print(df_temp)
+#chicken_dataset
+```
+By looking at the above data, we can see we have chicken weight for various time/days(vary from day=0 to day =21), and this data is for various chick which are labelled (from 1 to 50) and are kept on different diets (diets vary in group of chicks and are labelled as 1,2,3 and 4).
+
+Lets dive deep into each parameter data we collected for our experiment :
+
+1. weight
+its a numerical- ratio variable, and is an important feature of the dataset.
+lets see the distribution of weight for the given data.
+
+``` {r, mean_weight, echo = FALSE}
+dataset_weight<-chicken_dataset$weight
+mean_weight<-mean(dataset_weight)
+range_weight<- range(dataset_weight)
+sd_weight<- sd(dataset_weight)
+median_weight <- median(dataset_weight)
+
+```
+
+The weight has following distribution parameters,
+mean : `r mean_weight`, range: (`r range_weight`), standard_deviation :`r sd_weight`, median : `r median_weight`.
+
+Lets see the distribution for the the weight among all the data points:
+``` {r, plot1}
+library(tidyverse)
+weights <- chicken_dataset %>% 
+  group_by(weight) %>% 
+  summarise(weight_count = n())
+#weights
+ggplot(data=weights, aes(x = weight, y =weight_count)) +
+  geom_col()
+
+```
+``` {r}
+ggplot(data=chicken_dataset, aes(x = weight, fill = "red")) +
+  geom_density()+ xlim(-5,450)
+```
+
+By looking at data we can see, the weight distribution is right skewed, which means there is asymmertry in data, which can be because of following :
+1. Different diets affect the weight in diffrent way and there non- uniform distribution of number of chicken for each diet.
+2. Data for some chicks is not taken for all of the days.
+
+
+2. Lets have a look at **Time**
+Here Time, is a numerical ratio variable, measured in number of days.
+It represents number of days from the birth of the chicken.
+
+``` {r,}
+chicken_time <- chicken_dataset$Time
+summary(chicken_time)
+
+```
+
+
+By looking at the above plot we can see, at day = 0 we started with 50 Chicks and had data for all of chicken weights, as we moved on the number of data for various Chicks decreased, at the end of day =21 we just had access to the data for 45 chicks.
+Also, we can see the median of Time is still at 10 days, which means there is data is not very un-symmertric, we had access to 48 Chicks weight data at day =10.
+
+3. Lets look at  **chicks** column of our dataset 
+Chicks column represent the labels used to identify the chickens kept under obsevation, it is stored as ordinal data
+ranging from 1 to 50.
+
+``` {r,echo = FALSE, include = FALSE}
+chicks<-chicken_dataset$Chick
+chicks
+```
+
+
+``` {r,}
+chicks<-chicken_dataset$Chick
+ggplot(chicken_dataset, aes (x = Chick, y= Time)) + geom_col() 
+```
+
+By looking at the Time vs Chick column of the dataset we can see, there are 50 chickens and we have data from day = 0 to day = 21 for most of chickens, 
+except for Chick number =18, 16,15,8and 44
+
+
+4. Lets look at The Diets parameter
+Its a nominal parameter, which varies as numerical values as 1,2,3,4.
+Lets see the count plot for each type of Diet :
+
+```
+So, we have four types of Diet, lets see the distribution of various diets
+``` {r,}
+library(ggplot2)
+ggplot(data = chicken_dataset, aes(x=Diet, fill= Diet))+geom_bar()
+```
+we can see see, we have more data for diet=1 (220 entries) and less data for diet= 2(120 entries),3(120 entries),4(118 entries).We have almost equal data for Diet =2,3and 4.
+
+======================================================================================================================================================
+Lets start analyzing the data now :
+
+
+``` {r,}
+data_diet1 <- filter(ChickWeight,Diet==1)
+data_diet2 <- filter(ChickWeight,Diet==2)
+data_diet3 <- filter(ChickWeight,Diet==3)
+data_diet4 <- filter(ChickWeight,Diet==4)
+
+(dim(data_diet1))
+(dim(data_diet2))
+(dim(data_diet3))
+(dim(data_diet4))
+
+
+```
+
+# Analysis
+
+Lets dive into analysis mode, lets see how data varies.
+It is time to see the growth of weight of chickens for various diets 
+
+``` {r,}
+g = ggplot(data = ChickWeight,  aes(x = weight, fill = Diet))
+g + geom_density(alpha = 0.5) + xlim(0,400) + facet_grid(rows =vars(Diet))
+```
+
+Lets Plot the data of diet for day = 0 and day = 20
+
+``` {r,}
+library("Rmisc")
+data_diet1_day20 <- filter(ChickWeight,Time ==20)
+data_diet2_day20 <- filter(ChickWeight,Time ==20)
+data_diet3_day20 <- filter(ChickWeight,Time ==20)
+data_diet4_day20 <- filter(ChickWeight,Time ==20)
+
+CI_diet1_day_20 <- CI(data_diet1_day20$weight, .95)
+CI_diet2_day_20 <- CI(data_diet2_day20$weight, .95)
+CI_diet3_day_20 <- CI(data_diet3_day20$weight, .95)
+CI_diet4_day_20 <- CI(data_diet4_day20$weight, .95)
+```
+
+```{r,}
+data_day0 <- filter(ChickWeight, Time==0)
+```
+
+``` {r,}
+ggplot(data = data_day0, aes(y = weight, x = Diet, fill =Diet)) + geom_boxplot()
+```
+``` {r,}
+ggplot(data = data_day0, aes(y = weight, x = Diet)) + geom_col()
+```
+
+``` {r,}
+ggplot(data = data_day20, aes(y = weight, x = Diet, fill = Diet)) + geom_boxplot()+theme_bw()
+```
+
+``` {r,}
+ggplot(data = data_day20, aes(y = weight, x = Diet)) + geom_col()
+```
+
+lets see how weight increases with number of days for various diets
+``` {r,}
+ggplot(chicken_dataset, aes(x= Time, y = weight, color = Diet))+ geom_point() + geom_smooth(se = FALSE)+ theme_bw()
+
+```
+``` {r,}
+ggplot(data = data_day20, aes(x = weight,fill = Diet)) + geom_density()+theme_bw()+ facet_wrap(~Diet)
+```
+
+``` {r,}
+library("Rmisc")
+```
+``` {r}
+data_21 <- summarise_at(group_by(data_day20, Diet), vars(weight),funs(mean(weight)))
+data_21
+```
+``` {r}
+
+quantiles_95 <- function(x)
+{
+  p <- quantile(x,probs = c (0.05,0.25,0.5,0.75,0.95))
+  names (p) <- c ("ymin","lower","middle","upper","ymax")
+  p
+}
+
+quantiles_95(data_day20$weight)
+ggplot(data = data_day20, aes (y = weight, x = Diet, fill = Diet))+ guides(Fill=F) + coord_flip() + stat_summary(fun.data= quantiles_95, geom = "boxplot")
+
+```
+
+``` {r,}
+ggplot(data = data_day0, aes (y = weight, x = Diet, fill = Diet))+ guides(Fill=F) + coord_flip() + stat_summary(fun.data= quantiles_95, geom = "boxplot")
+```
+
+``` {r,}
+ggplot(data = chicken_dataset, aes (y = weight, x = Time), color = Diet)+ geom_col()
+```
+
